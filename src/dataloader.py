@@ -45,17 +45,19 @@ def get_svm_weights(trainData,testData=None,p=2,c=3,verbose=True):
         scores = cross_val_score(clf, trainData[0], trainData[1], cv=5)
         print("val acc (leave one out among training data):",np.mean(scores))
     clf.fit(trainData[0], trainData[1])
-    support_vecs = clf.support_vectors_
+    # support_vecs = clf.support_vectors_
+    support_indice = clf.support_
     intercept = clf.intercept_
     dual_coef = clf.dual_coef_
 
+    perdiction_result = None
     if testData !=None:
         perdiction_result = clf.predict(testData[0])
         acc = perdiction_result==testData[1]
         acc = sum(acc)/acc.shape[0]
         if verbose:
             print("test acc:",acc)
-    return support_vecs,intercept, dual_coef,clf, perdiction_result
+    return support_indice, intercept, dual_coef, clf, perdiction_result
 
 if __name__ == '__main__':
     wbc_loader = DataLoader("../assets/breast_cancer_wisconsin.data")
@@ -63,7 +65,8 @@ if __name__ == '__main__':
     ddr_loader = DataLoader("../assets/messidor_features.data")
     X_ddr_train, X_ddr_test, y_ddr_train, y_ddr_test = ddr_loader.data
 
-    support_vecs,intercept, dual_coef, model,_ =get_svm_weights((X_wbc_train,y_wbc_train),(X_wbc_test,y_wbc_test))
-    support_vecs_ddr, intercept_ddr, dual_coef_ddr, model_ddr, _ = get_svm_weights((X_ddr_train, y_ddr_train), (X_ddr_test,
+    support_indice,intercept, dual_coef, model,_ =get_svm_weights((X_wbc_train,y_wbc_train),(X_wbc_test,y_wbc_test))
+
+    support_indice_ddr, intercept_ddr, dual_coef_ddr, model_ddr, _ = get_svm_weights((X_ddr_train, y_ddr_train), (X_ddr_test,
                                                                                                 y_ddr_test),p=3,c=0.3)
     # Note: ddr dataset is probably not the best dataset for poly SVM, best test accuracy is around 65%
