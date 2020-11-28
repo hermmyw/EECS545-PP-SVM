@@ -5,7 +5,7 @@ from sklearn.preprocessing import StandardScaler
 from sklearn import svm
 
 class DataLoader(object):
-    def __init__(self, file_path):
+    def __init__(self, file_path, test_size):
         # import data and remove NaN samples
         self.raw_data = np.genfromtxt(file_path, delimiter=',')
         self.raw_data = self.raw_data[~np.isnan(self.raw_data).any(axis=1)]
@@ -16,7 +16,7 @@ class DataLoader(object):
         y = self.set_binary(y)
         
         # split and normalize
-        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
+        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=test_size, random_state=42)
         X_train, X_test = self.normalize(X_train, X_test)
         self.data = (X_train, X_test, y_train, y_test)
         
@@ -60,7 +60,7 @@ def get_svm_weights(trainData,testData=None,p=2,c=3,verbose=True):
     return support_indice, intercept, dual_coef, clf, perdiction_result
 
 if __name__ == '__main__':
-    wbc_loader = DataLoader("../assets/breast_cancer_wisconsin.data")
+    wbc_loader = DataLoader("../assets/breast_cancer_wisconsin.data", 0.3)
     X_wbc_train, X_wbc_test, y_wbc_train, y_wbc_test = wbc_loader.data
     ddr_loader = DataLoader("../assets/messidor_features.data")
     X_ddr_train, X_ddr_test, y_ddr_train, y_ddr_test = ddr_loader.data
