@@ -150,14 +150,14 @@ class Server:
         # when the polynomial kernel has a degree more than 1, let client raise the power
         # Corresponding to Equation (17)
         if self.p > 1:
-            print(f'calculating degree {p} kernel')
+            print(f'calculating degree {self.p} kernel')
             start_time = time.time()
             random_mask = np.random.randint(1, 100, size=(test_n, n))
             masked_p1kernel = np.multiply(kernel, random_mask)
             masked_kernel = self.client.client_receive('kernel_matrix', masked_p1kernel)
             kernel = np.divide(masked_kernel, np.power(random_mask, self.p))
             end_time = time.time()
-            print(f'finished calculating degree {p} kernel, Time={end_time-start_time} seconds')
+            print(f'finished calculating degree {self.p} kernel, Time={end_time-start_time} seconds')
             print()
         return kernel
 
