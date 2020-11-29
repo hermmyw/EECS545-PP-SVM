@@ -15,7 +15,9 @@ parser.add_argument("-s", "--scale", help="the scaling factor gamma, as numbers 
 parser.add_argument("-t", "--test", help="proportion of test set, range from (0, 1)",
                     default=0.2, type=float)
 parser.add_argument("-l", "--digits", help="choice of l in Section 3.3.4. Default value should be large enough",
-                    default=10, type=int)
+                    default=9, type=int)
+parser.add_argument("--line", help="if --line is set, instead of predict the entire matrix, it goes line by line",
+                    action="store_true")
 args=parser.parse_args()
 
 file_path = args.file[0]
@@ -24,6 +26,7 @@ p = args.degree
 gamma = 10**args.scale
 l = args.digits
 t = args.test
+line = args.line
 
 # load data
 wbc_loader = DataLoader(file_path, t)
@@ -38,4 +41,5 @@ server = Server(public_key, train_X, train_y, p, gamma, l, verbose)
 client.server = server
 server.client = client
 
-client.test()
+# start predicting/testing
+client.test(line)
