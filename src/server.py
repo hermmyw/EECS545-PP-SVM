@@ -60,7 +60,7 @@ class Server:
     '''Takes an encrypted vector t as parameter, output class label (0 or 1) for the vector'''
     def predict(self, vector_t):
         kernel = self.get_kernel(vector_t)
-        decision_function = np.sum(np.multiply(self.gamma * np.multiply(self.alpha, self.train_y), kernel)) \
+        decision_function = np.sum(np.multiply(self.gamma * self.alpha, kernel)) \
                             + self.encrypt(self.gamma**(2*self.p + 1)*self.b)
         print(f'PPSVM decision function: {self.client.decrypt(decision_function)}')
         '''as the result of decision function usually has too many digits, and it is only the sign of it that matters'''
@@ -110,8 +110,8 @@ class Server:
         kernels = self.get_kernel_matrix(matrix_t)
         print('calculating decision functions')
         start_time = time.time()
-        decision_functions = np.multiply(self.gamma * np.multiply(self.alpha, self.train_y), kernels)
-        decision_functions = (np.sum(decision_functions, axis=1) + self.gamma ** (2 * self.p + 1) * self.b)
+        decision_functions = np.multiply(self.gamma * self.alpha, kernels)
+        decision_functions = np.sum(decision_functions, axis=1) + self.encrypt(self.gamma ** (2 * self.p + 1) * self.b)
         min_digits = int(math.log10(abs(self.gamma ** (2 * self.p + 1) * self.b)))
         decision_functions = np.divide(decision_functions, 10 ** min_digits)
         print(f'finished calculating decision functions, Time={time.time()-start_time}')
@@ -131,7 +131,7 @@ class Server:
         underflow_flag = self.client.magic_comparison_list(masked_result, self.encrypt_np(mod_r))
         unmasked_result = np.add(unmasked_result, underflow_flag)
         unmasked_result = np.subtract(z, unmasked_result)
-        predictions = np.divide(unmasked_result, 10 ** self.l)  # the predictions in form of list of 0 or 1
+        predictions = np.add(np.divide(unmasked_result, 10 ** self.l), self.encrypt(1))  # the predictions in form of list of 0 or 1
         print(f'finished calculating signs of decision functions, Time={time.time()-start_time}')
         print()
 
@@ -165,7 +165,7 @@ class Server:
     '''used for comparison, not part of the PPSVM'''
     def decrypted_predict(self, vector_t):
         kernel = np.power(np.add(np.dot(self.train_x, vector_t), 1), self.p)
-        decision_function = np.multiply(np.multiply(self.alpha, self.train_y), kernel)
+        decision_function = np.multiply(self.alpha, kernel)
         decision_function = (np.sum(decision_function) + self.b)[0]
         print(f'SVM decision function: {decision_function}')
         if decision_function < 0:
@@ -175,8 +175,9 @@ class Server:
     '''predict a matrix using normal SVM'''
     '''used for comparison, not part of the PPSVM'''
     def decrypted_predict_matrix(self, matrix_t):
-        kernel = np.power(np.add(np.dot(self.train_x, np.transpose(matrix_t)), 1), self.p)
-        decision_functions = np.multiply(np.transpose(np.multiply(self.alpha, self.train_y)), kernel)
+        p1_kernel = np.add(np.dot(self.train_x, np.transpose(matrix_t)), 1)  # K(x, t) = (xt + 1)
+        kernel = np.multiply(np.sign(p1_kernel), np.power(p1_kernel, self.p))
+        decision_functions = np.multiply(np.transpose(self.alpha), kernel)
         decision_functions = (np.sum(decision_functions, axis=0) + self.b)
         results = np.sign(decision_functions)
         return results

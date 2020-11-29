@@ -105,8 +105,16 @@ class Client:
             svm_end_time = time.time()
             ppsvm_start_time = time.time()
             PPSVM_matrix_pred = self.server.server_receive('data matrix', self.encrypt_matrix(self.test_x * self.gamma))
-            PPSVM_matrix_pred = self.decrypt_np(PPSVM_matrix_pred) * 2 - 1  # to make the output either -1 or 1
+            PPSVM_matrix_pred = self.decrypt_np(PPSVM_matrix_pred)
+            PPSVM_matrix_pred = PPSVM_matrix_pred * 2 - 1  # to make the output either -1 or 1
             ppsvm_end_time = time.time()
+            if self.verbal:
+                print('CORRECT')
+                print(self.test_y)
+                print('SVM')
+                print(SVM_matrix_pred)
+                print('PPSVM')
+                print(PPSVM_matrix_pred)
             print(f'SVM TIME: {svm_end_time-svm_start_time} seconds')
             print(f'PPSVM TIME: {ppsvm_end_time-ppsvm_start_time} seconds')
 
