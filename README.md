@@ -18,3 +18,8 @@ In the target directory, run
 ```
 $ pip install -r requirements.txt
 ```
+To see all the program flags, run with option -h
+Running example :
+```
+$ ./main.py -p 2 -s 4 -t 0.3 -v
+```
