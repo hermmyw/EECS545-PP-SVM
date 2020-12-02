@@ -3,6 +3,7 @@ from phe import paillier
 import numpy as np
 import matplotlib.pyplot as plt
 import pickle
+import os
 
 from dataloader import DataLoader
 from client import Client
@@ -72,13 +73,18 @@ def PPSVM_loo(file_path="../assets/breast_cancer_wisconsin.data",
 
 # %% run on WBC dataset
 s_list = list(range(7))
-result_wbc_s = []
-for s in s_list:
-    result_wbc_s.append(PPSVM_loo(file_path="../assets/breast_cancer_wisconsin.data", 
-                                  verbose=False, p=2, c=3, s=s, l=9))
 
-with open("../output/result_wbc_s.pkl", 'wb') as f:
-    pickle.dump(result_wbc_s, f)
+filename = "../output/result_wbc_s.pkl"
+if os.path.isfile(filename):
+    with open(filename, 'rb') as f: 
+        result_wbc_s = pickle.load(f)
+else:
+    result_wbc_s = []
+    for s in s_list:
+        result_wbc_s.append(PPSVM_loo(file_path="../assets/breast_cancer_wisconsin.data", 
+                                    verbose=False, p=2, c=3, s=s, l=9))
+    with open(filename, 'wb') as f:
+        pickle.dump(result_wbc_s, f)
 
 # %% make figures
 acc_SVM = np.array([[result_wbc_s[s][1][1][2] for s in s_list], \
