@@ -66,12 +66,12 @@ def get_svm_weights(trainData,testData=None,p=2,c=3,verbose=True):
     return support_indice, intercept, dual_coef, clf, prediction_result
 
 if __name__ == '__main__':
-    wbc_loader = DataLoader("../assets/breast_cancer_wisconsin.data", 0.3)
+    wbc_loader = DataLoader("../assets/breast_cancer_wisconsin.data", 1/683)
     X_wbc_train, X_wbc_test, y_wbc_train, y_wbc_test = wbc_loader.data
     ddr_loader = DataLoader("../assets/messidor_features.data", 0.3)
     X_ddr_train, X_ddr_test, y_ddr_train, y_ddr_test = ddr_loader.data
 
-    support_indice,intercept, dual_coef, model,_ =get_svm_weights((X_wbc_train,y_wbc_train),(X_wbc_test,y_wbc_test))
+    support_indice,intercept, dual_coef, model,_ =get_svm_weights((X_wbc_train,y_wbc_train),(X_wbc_test,y_wbc_test), p=2, c=3)
 
     support_indice_ddr, intercept_ddr, dual_coef_ddr, model_ddr, _ = get_svm_weights((X_ddr_train, y_ddr_train), (X_ddr_test,
                                                                                                 y_ddr_test),p=3,c=0.3)

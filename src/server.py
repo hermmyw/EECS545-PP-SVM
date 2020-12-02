@@ -6,12 +6,13 @@ import random  # use of random instead of np.random as there's a int32 limit to 
 
 
 class Server:
-    def __init__(self, public_key, train_x, train_y, p, gamma, l, verbal=False):
+    def __init__(self, public_key, train_x, train_y, p, c, gamma, l, verbal=False):
         self.public_key = public_key  # public key used to encrypt
         self.train_x = train_x  # training set
         self.train_y = train_y  # training set labels
         self.verbal = verbal  # verbal mode
         self.p = p  # degree of the polynomial kernel
+        self.c = c  # regularization parameter
         self.gamma = gamma  # scaling factor
         self.l = l  # used in decision function
         self.train_x, self.train_y, self.alpha, self.b = self.get_parameters(train_x, train_y)  # model parameters
@@ -53,8 +54,10 @@ class Server:
 
     '''pre-train the svm parameters. The procedure is the same for normal SVM, thus sklearn is used for now'''
     def get_parameters(self, X, y):
-        support_indice, b, alpha, _, _ = dataloader.get_svm_weights((self.train_x, self.train_y), p=self.p, verbose=False)
-
+        support_indice, b, alpha, _, _ = dataloader.get_svm_weights((self.train_x, self.train_y), p=self.p, c=self.c, verbose=False)
+        if self.verbal:
+            print(f'SERVER: number of support vectors {support_indice.size}')
+            print(support_indice)
         return self.train_x[support_indice], self.train_y[support_indice], alpha, b
 
     '''Takes an encrypted vector t as parameter, output class label (0 or 1) for the vector'''
