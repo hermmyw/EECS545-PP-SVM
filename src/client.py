@@ -128,9 +128,35 @@ class Client:
             SVM_accuracy = np.sum(SVM_accuracy)
             PPSVM_accuracy = np.sum(PPSVM_accuracy)
             similarity = np.sum(similarity)
+            n_p = np.sum(self.test_y == 1)
+            n_n = np.sum(self.test_y == -1) 
+            SVM_accuracy_p = np.zeros(n)
+            SVM_accuracy_n = np.zeros(n)
+            PPSVM_accuracy_p = np.zeros(n)
+            PPSVM_accuracy_n = np.zeros(n)
+            similarity_p = np.zeros(n)
+            similarity_n = np.zeros(n)
+            SVM_accuracy_p[(SVM_matrix_pred == 1) & (self.test_y == 1)] = 1
+            SVM_accuracy_n[(SVM_matrix_pred == -1) & (self.test_y == -1)] = 1
+            PPSVM_accuracy_p[(PPSVM_matrix_pred == 1) & (self.test_y == 1)] = 1
+            PPSVM_accuracy_n[(PPSVM_matrix_pred == -1) & (self.test_y == -1)] = 1
+            similarity_p[(self.test_y == 1) & (PPSVM_matrix_pred == SVM_matrix_pred)] = 1
+            similarity_n[(self.test_y == -1) & (PPSVM_matrix_pred == SVM_matrix_pred)] = 1
+            SVM_accuracy_p = np.sum(SVM_accuracy_p)
+            SVM_accuracy_n = np.sum(SVM_accuracy_n)
+            PPSVM_accuracy_p = np.sum(PPSVM_accuracy_p)
+            PPSVM_accuracy_n = np.sum(PPSVM_accuracy_n)
+            similarity_p = np.sum(similarity_p)
+            similarity_n = np.sum(similarity_n)
             print(f'SVM Accuracy: {SVM_accuracy}/{n}={SVM_accuracy/n}')
+            print(f'SVM Accuracy positive class: {SVM_accuracy_p}/{n_p}={SVM_accuracy_p/n_p}')
+            print(f'SVM Accuracy negative class: {SVM_accuracy_n}/{n_n}={SVM_accuracy_n/n_n}')
             print(f'PPSVM Accuracy: {PPSVM_accuracy}/{n}={PPSVM_accuracy/n}')
+            print(f'PPSVM Accuracy negative class: {PPSVM_accuracy_p}/{n_p}={PPSVM_accuracy_p/n_p}')
+            print(f'PPSVM Accuracy positive class: {PPSVM_accuracy_n}/{n_n}={PPSVM_accuracy_n/n_n}')
             print(f'SVM & PPSVM similarity: {similarity}/{n}={similarity/n}')
+            print(f'SVM & PPSVM similarity positive class: {similarity_p}/{n_p}={similarity_p/n_p}')
+            print(f'SVM & PPSVM similarity negative class: {similarity_n}/{n_n}={similarity_n/n_n}')
 
         else:
             correct_num = 0
