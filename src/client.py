@@ -13,6 +13,10 @@ class Client:
         self.gamma = gamma  # scaling factor
         self.l = l  # used in decision function
         self.server = None  # server set for communication
+        self.y_SVM = None  # test labels predicted by SVM
+        self.y_PPSVM = None  # test labels predicted by PPSVM
+        self.time_SVM = None  # time spent on SVM
+        self.time_PPSVM = None  # time spent on PPSVM
 
     '''encrypt an number'''
     '''if the number is not an integer, it will be converted to integer'''
@@ -103,11 +107,13 @@ class Client:
             svm_start_time = time.time()
             SVM_matrix_pred = self.server.server_receive('decrypted data matrix', self.test_x)
             svm_end_time = time.time()
+            self.y_SVM = SVM_matrix_pred
             ppsvm_start_time = time.time()
             PPSVM_matrix_pred = self.server.server_receive('data matrix', self.encrypt_matrix(self.test_x * self.gamma))
             PPSVM_matrix_pred = self.decrypt_np(PPSVM_matrix_pred)
             PPSVM_matrix_pred = PPSVM_matrix_pred * 2 - 1  # to make the output either -1 or 1
             ppsvm_end_time = time.time()
+            self.y_PPSVM = PPSVM_matrix_pred
             if self.verbal:
                 print('CORRECT')
                 print(self.test_y)
@@ -115,48 +121,52 @@ class Client:
                 print(SVM_matrix_pred)
                 print('PPSVM')
                 print(PPSVM_matrix_pred)
-            print(f'SVM TIME: {svm_end_time-svm_start_time} seconds')
-            print(f'PPSVM TIME: {ppsvm_end_time-ppsvm_start_time} seconds')
+            self.time_SVM = svm_end_time - svm_start_time
+            self.time_PPSVM = ppsvm_end_time - ppsvm_start_time
+            if n > 1:
+                print(f'SVM TIME: {svm_end_time-svm_start_time} seconds')
+                print(f'PPSVM TIME: {ppsvm_end_time-ppsvm_start_time} seconds')
 
             # Measure the performance
-            SVM_accuracy = np.zeros(n)
-            PPSVM_accuracy = np.zeros(n)
-            similarity = np.zeros(n)
-            SVM_accuracy[SVM_matrix_pred == self.test_y] = 1
-            PPSVM_accuracy[PPSVM_matrix_pred == self.test_y] = 1
-            similarity[PPSVM_matrix_pred == SVM_matrix_pred] = 1
-            SVM_accuracy = np.sum(SVM_accuracy)
-            PPSVM_accuracy = np.sum(PPSVM_accuracy)
-            similarity = np.sum(similarity)
-            n_p = np.sum(self.test_y == 1)
-            n_n = np.sum(self.test_y == -1) 
-            SVM_accuracy_p = np.zeros(n)
-            SVM_accuracy_n = np.zeros(n)
-            PPSVM_accuracy_p = np.zeros(n)
-            PPSVM_accuracy_n = np.zeros(n)
-            similarity_p = np.zeros(n)
-            similarity_n = np.zeros(n)
-            SVM_accuracy_p[(SVM_matrix_pred == 1) & (self.test_y == 1)] = 1
-            SVM_accuracy_n[(SVM_matrix_pred == -1) & (self.test_y == -1)] = 1
-            PPSVM_accuracy_p[(PPSVM_matrix_pred == 1) & (self.test_y == 1)] = 1
-            PPSVM_accuracy_n[(PPSVM_matrix_pred == -1) & (self.test_y == -1)] = 1
-            similarity_p[(self.test_y == 1) & (PPSVM_matrix_pred == SVM_matrix_pred)] = 1
-            similarity_n[(self.test_y == -1) & (PPSVM_matrix_pred == SVM_matrix_pred)] = 1
-            SVM_accuracy_p = np.sum(SVM_accuracy_p)
-            SVM_accuracy_n = np.sum(SVM_accuracy_n)
-            PPSVM_accuracy_p = np.sum(PPSVM_accuracy_p)
-            PPSVM_accuracy_n = np.sum(PPSVM_accuracy_n)
-            similarity_p = np.sum(similarity_p)
-            similarity_n = np.sum(similarity_n)
-            print(f'SVM Accuracy: {SVM_accuracy}/{n}={SVM_accuracy/n}')
-            print(f'SVM Accuracy positive class: {SVM_accuracy_p}/{n_p}={SVM_accuracy_p/n_p}')
-            print(f'SVM Accuracy negative class: {SVM_accuracy_n}/{n_n}={SVM_accuracy_n/n_n}')
-            print(f'PPSVM Accuracy: {PPSVM_accuracy}/{n}={PPSVM_accuracy/n}')
-            print(f'PPSVM Accuracy negative class: {PPSVM_accuracy_p}/{n_p}={PPSVM_accuracy_p/n_p}')
-            print(f'PPSVM Accuracy positive class: {PPSVM_accuracy_n}/{n_n}={PPSVM_accuracy_n/n_n}')
-            print(f'SVM & PPSVM similarity: {similarity}/{n}={similarity/n}')
-            print(f'SVM & PPSVM similarity positive class: {similarity_p}/{n_p}={similarity_p/n_p}')
-            print(f'SVM & PPSVM similarity negative class: {similarity_n}/{n_n}={similarity_n/n_n}')
+            if n > 1:
+                SVM_accuracy = np.zeros(n)
+                PPSVM_accuracy = np.zeros(n)
+                similarity = np.zeros(n)
+                SVM_accuracy[SVM_matrix_pred == self.test_y] = 1
+                PPSVM_accuracy[PPSVM_matrix_pred == self.test_y] = 1
+                similarity[PPSVM_matrix_pred == SVM_matrix_pred] = 1
+                SVM_accuracy = np.sum(SVM_accuracy)
+                PPSVM_accuracy = np.sum(PPSVM_accuracy)
+                similarity = np.sum(similarity)
+                n_p = np.sum(self.test_y == 1)
+                n_n = np.sum(self.test_y == -1) 
+                SVM_accuracy_p = np.zeros(n)
+                SVM_accuracy_n = np.zeros(n)
+                PPSVM_accuracy_p = np.zeros(n)
+                PPSVM_accuracy_n = np.zeros(n)
+                similarity_p = np.zeros(n)
+                similarity_n = np.zeros(n)
+                SVM_accuracy_p[(SVM_matrix_pred == 1) & (self.test_y == 1)] = 1
+                SVM_accuracy_n[(SVM_matrix_pred == -1) & (self.test_y == -1)] = 1
+                PPSVM_accuracy_p[(PPSVM_matrix_pred == 1) & (self.test_y == 1)] = 1
+                PPSVM_accuracy_n[(PPSVM_matrix_pred == -1) & (self.test_y == -1)] = 1
+                similarity_p[(self.test_y == 1) & (PPSVM_matrix_pred == SVM_matrix_pred)] = 1
+                similarity_n[(self.test_y == -1) & (PPSVM_matrix_pred == SVM_matrix_pred)] = 1
+                SVM_accuracy_p = np.sum(SVM_accuracy_p)
+                SVM_accuracy_n = np.sum(SVM_accuracy_n)
+                PPSVM_accuracy_p = np.sum(PPSVM_accuracy_p)
+                PPSVM_accuracy_n = np.sum(PPSVM_accuracy_n)
+                similarity_p = np.sum(similarity_p)
+                similarity_n = np.sum(similarity_n)
+                print(f'SVM Accuracy: {SVM_accuracy}/{n}={SVM_accuracy/n}')
+                print(f'SVM Accuracy positive class: {SVM_accuracy_p}/{n_p}={SVM_accuracy_p/n_p}')
+                print(f'SVM Accuracy negative class: {SVM_accuracy_n}/{n_n}={SVM_accuracy_n/n_n}')
+                print(f'PPSVM Accuracy: {PPSVM_accuracy}/{n}={PPSVM_accuracy/n}')
+                print(f'PPSVM Accuracy negative class: {PPSVM_accuracy_p}/{n_p}={PPSVM_accuracy_p/n_p}')
+                print(f'PPSVM Accuracy positive class: {PPSVM_accuracy_n}/{n_n}={PPSVM_accuracy_n/n_n}')
+                print(f'SVM & PPSVM similarity: {similarity}/{n}={similarity/n}')
+                print(f'SVM & PPSVM similarity positive class: {similarity_p}/{n_p}={similarity_p/n_p}')
+                print(f'SVM & PPSVM similarity negative class: {similarity_n}/{n_n}={similarity_n/n_n}')
 
         else:
             correct_num = 0
