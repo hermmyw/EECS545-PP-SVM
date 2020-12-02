@@ -15,7 +15,9 @@ class Server:
         self.c = c  # regularization parameter
         self.gamma = gamma  # scaling factor
         self.l = l  # used in decision function
-        self.train_x, self.train_y, self.alpha, self.b = self.get_parameters(train_x, train_y)  # model parameters
+        self.mean, self.std = self.get_normalize_factor(train_x)  # get mean and std dev of train_x for normalization
+        self.train_x = np.divide(np.subtract(self.train_x, self.mean), self.std)  # normalize train_x
+        self.train_x, self.train_y, self.alpha, self.b = self.get_parameters(self.train_x, train_y)  # model parameters
         self.client = None  # client set for communication
 
     '''encrypt an number'''
@@ -52,16 +54,28 @@ class Server:
             print()
         return np.array(encrypted_matrix)
 
+    def get_normalize_factor(self, train_x):
+        std = np.std(train_x, axis=0, ddof=1)
+        mean = np.mean(train_x, axis=0)
+        return mean, std
+
     '''pre-train the svm parameters. The procedure is the same for normal SVM, thus sklearn is used for now'''
     def get_parameters(self, X, y):
-        support_indice, b, alpha, _, _ = dataloader.get_svm_weights((self.train_x, self.train_y), p=self.p, c=self.c, verbose=False)
+        support_indice, b, alpha, _, _ = dataloader.get_svm_weights((X, y), p=self.p, c=self.c, verbose=False)
         if self.verbal:
             print(f'SERVER: number of support vectors {support_indice.size}')
             print(support_indice)
-        return self.train_x[support_indice], self.train_y[support_indice], alpha, b
+        return X[support_indice], y[support_indice], alpha, b
+
+    '''normalize the data client sent'''
+    def normalize(self, t):
+        substr = self.encrypt_np(np.multiply(np.divide(self.gamma, self.std), self.mean))
+        normalized_data = np.subtract(np.divide(t, self.std), substr)
+        return normalized_data
 
     '''Takes an encrypted vector t as parameter, output class label (0 or 1) for the vector'''
     def predict(self, vector_t):
+        vector_t = self.normalize(vector_t)
         kernel = self.get_kernel(vector_t)
         decision_function = np.sum(np.multiply(self.gamma * self.alpha, kernel)) \
                             + self.encrypt(self.gamma**(2*self.p + 1)*self.b)
@@ -100,7 +114,7 @@ class Server:
 
     '''corresponding to Equation (15)(16)'''
     def get_p1kernel_list(self, vector_t):
-        scaled_X = self.gamma * self.train_x
+        scaled_X = (self.gamma * self.train_x).astype(int)
         p1kernel_list = []
         n, d = self.train_x.shape
         for i in range(0, n):
@@ -108,12 +122,13 @@ class Server:
         return np.array(p1kernel_list)
 
     def predict_matrix(self, matrix_t):
+        matrix_t = self.normalize(matrix_t)
         n, d = matrix_t.shape
         '''calculate the kernels for the encrypted vector t'''
         kernels = self.get_kernel_matrix(matrix_t)
         print('calculating decision functions')
         start_time = time.time()
-        decision_functions = np.multiply(self.gamma * self.alpha, kernels)
+        decision_functions = np.multiply((self.gamma * self.alpha).astype(int), kernels)
         decision_functions = np.sum(decision_functions, axis=1) + self.encrypt(self.gamma ** (2 * self.p + 1) * self.b)
         min_digits = int(math.log10(abs(self.gamma ** (2 * self.p + 1) * self.b)))
         decision_functions = np.divide(decision_functions, 10 ** min_digits)
@@ -145,7 +160,7 @@ class Server:
         test_n, _ = matrix_t.shape
         print('calculating degree 1 kernel')
         start_time = time.time()
-        p1_kernel = np.add(np.dot(matrix_t, np.transpose(self.gamma * self.train_x)), self.gamma**2)
+        p1_kernel = np.add(np.dot(matrix_t, np.transpose(self.gamma * self.train_x).astype(int)), self.gamma**2)
         end_time = time.time()
         print(f'finished calculating degree 1 kernel, Time={end_time-start_time} seconds')
         print()
@@ -167,6 +182,9 @@ class Server:
     '''predict using normal SVM'''
     '''used for comparison, not part of the PPSVM'''
     def decrypted_predict(self, vector_t):
+        vector_t = np.divide(np.subtract(vector_t, self.mean), self.std)
+        print(vector_t)
+
         kernel = np.power(np.add(np.dot(self.train_x, vector_t), 1), self.p)
         decision_function = np.multiply(self.alpha, kernel)
         decision_function = (np.sum(decision_function) + self.b)[0]
@@ -178,8 +196,10 @@ class Server:
     '''predict a matrix using normal SVM'''
     '''used for comparison, not part of the PPSVM'''
     def decrypted_predict_matrix(self, matrix_t):
+        matrix_t = np.divide(np.subtract(matrix_t, self.mean), self.std)
+
         p1_kernel = np.add(np.dot(self.train_x, np.transpose(matrix_t)), 1)  # K(x, t) = (xt + 1)
-        kernel = np.multiply(np.sign(p1_kernel), np.power(p1_kernel, self.p))
+        kernel = np.power(p1_kernel, self.p)
         decision_functions = np.multiply(np.transpose(self.alpha), kernel)
         decision_functions = (np.sum(decision_functions, axis=0) + self.b)
         results = np.sign(decision_functions)

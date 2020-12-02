@@ -31,7 +31,7 @@ t = args.test
 line = args.line
 
 # load data
-wbc_loader = DataLoader(file_path, t)
+wbc_loader = DataLoader(file_path, t, need_normalize=False)
 train_X, test_X, train_y, test_y = wbc_loader.data
 
 # generate encryption/decryption keys
