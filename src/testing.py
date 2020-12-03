@@ -29,7 +29,7 @@ def PPSVM_loo(file_path="../assets/breast_cancer_wisconsin.data",
     line = False
     t = 0.1
 
-    wbc_loader = DataLoader(file_path, t)
+    wbc_loader = DataLoader(file_path, t, need_normalize=False)
     loo_list = wbc_loader.data_loo
     n = len(loo_list)
     y_test = np.zeros(n)
@@ -107,7 +107,7 @@ axs[0].legend()
 axs[0].set_xlabel('scale')
 axs[0].set_ylabel('accuracy')
 axs[1].semilogx(scale, time_PPSVM)
-axs[1].set_ylim([0, 2000])
+axs[1].set_ylim([0, 6000])
 axs[1].set_xlabel('scale')
 axs[1].set_ylabel('time (s)')
 plt.tight_layout()
