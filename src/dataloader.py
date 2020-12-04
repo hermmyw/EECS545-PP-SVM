@@ -9,7 +9,8 @@ class DataLoader(object):
         # import data and remove NaN samples
         self.raw_data = np.genfromtxt(file_path, delimiter=',')
         self.raw_data = self.raw_data[~np.isnan(self.raw_data).any(axis=1)]
-        
+        print("Data size: ", self.raw_data.shape)
+
         # extract features and labels
         X = self.raw_data[:,0:-1]
         y = self.raw_data[:,-1]
@@ -110,13 +111,16 @@ def test_loo(loo_list, p=2, c=3, verbose=False):
 if __name__ == '__main__':
     wbc_loader = DataLoader("../assets/breast_cancer_wisconsin.data", 0.3)
     X_wbc_train, X_wbc_test, y_wbc_train, y_wbc_test = wbc_loader.data
-    ddr_loader = DataLoader("../assets/messidor_features.data", 0.3)
-    X_ddr_train, X_ddr_test, y_ddr_train, y_ddr_test = ddr_loader.data
+    ckd_loader = DataLoader("../assets/chronic_kidney_disease2.data", 1/228)
+    X_ckd_train, X_ckd_test, y_ckd_train, y_ckd_test = ckd_loader.data
 
     support_indice,intercept, dual_coef, model,_ =get_svm_weights((X_wbc_train,y_wbc_train),(X_wbc_test,y_wbc_test), p=2, c=1)
 
-    support_indice_ddr, intercept_ddr, dual_coef_ddr, model_ddr, _ = get_svm_weights((X_ddr_train, y_ddr_train), (X_ddr_test,
-                                                                                                y_ddr_test),p=3,c=0.3)
+    #support_indice_ddr, intercept_ddr, dual_coef_ddr, model_ddr, _ = get_svm_weights((X_ddr_train, y_ddr_train), (X_ddr_test,
+                                                                                                #y_ddr_test),p=3,c=0.3)
     # Note: ddr dataset is probably not the best dataset for poly SVM, best test accuracy is around 65%
+    support_indice_ckd, intercept_ckd, dual_coef_ckd, model_ckd, _ = get_svm_weights((X_ckd_train, y_ckd_train), (X_ckd_test,
+                                                                                                y_ckd_test),p=3,c=0.3)
+    
 
     test_loo(wbc_loader.data_loo, p=2, c=1, verbose=False) 
