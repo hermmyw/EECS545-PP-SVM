@@ -74,43 +74,55 @@ def PPSVM_loo(file_path="../assets/breast_cancer_wisconsin.data",
 # %% run on WBC dataset
 s_list = list(range(7))
 
-filename = "../output/result_wbc_s.pkl"
-if os.path.isfile(filename):
-    with open(filename, 'rb') as f: 
-        result_wbc_s = pickle.load(f)
-else:
-    result_wbc_s = []
-    for s in s_list:
-        result_wbc_s.append(PPSVM_loo(file_path="../assets/breast_cancer_wisconsin.data", 
-                                    verbose=False, p=2, c=3, s=s, l=9))
-    with open(filename, 'wb') as f:
-        pickle.dump(result_wbc_s, f)
+def scan_scale(file_path, p, c, s_list, save_name):
+    if os.path.isfile(save_name + ".pkl"):
+        with open(save_name + ".pkl", 'rb') as f: 
+            result = pickle.load(f)
+    else:
+        result = []
+        for s in s_list:
+            result.append(PPSVM_loo(file_path=file_path, 
+                                        verbose=False, p=p, c=c, s=s, l=9))
+        with open(save_name + ".pkl", 'wb') as f:
+            pickle.dump(result, f)
+    return result
+
+result_wbc_s = scan_scale("../assets/breast_cancer_wisconsin.data", 
+                          2, 0.005, s_list, 
+                          "../output/result_wbc_s")
 
 # %% make figures
-acc_SVM = np.array([[result_wbc_s[s][1][1][2] for s in s_list], \
-                    [result_wbc_s[s][1][2][0][3] for s in s_list],
-                    [result_wbc_s[s][1][2][1][3] for s in s_list]])
-acc_PPSVM = np.array([[result_wbc_s[s][2][1][2] for s in s_list], \
-                      [result_wbc_s[s][2][2][0][3] for s in s_list],
-                      [result_wbc_s[s][2][2][1][3] for s in s_list]])
-time_PPSVM = np.array([np.sum(result_wbc_s[s][2][3]) for s in s_list])
-scale = 10 ** np.array(s_list)
+def plot_scale(s_list, result, save_name):
+    acc_SVM = np.array([[result[s][1][1][2] for s in s_list], \
+                        [result[s][1][2][0][3] for s in s_list],
+                        [result[s][1][2][1][3] for s in s_list]])
+    acc_PPSVM = np.array([[result[s][2][1][2] for s in s_list], \
+                          [result[s][2][2][0][3] for s in s_list],
+                          [result[s][2][2][1][3] for s in s_list]])
+    time_PPSVM = np.array([np.sum(result[s][2][3]) for s in s_list])
+    scale = 10 ** np.array(s_list)
 
-fig, axs = plt.subplots(1, 2, figsize=(7.2, 3.6), dpi=600)
-axs[0].semilogx(scale, acc_SVM[0, :], label='SVM total', linestyle='--', color='C0')
-axs[0].semilogx(scale, acc_SVM[1, :], label='SVM negative', linestyle='--', color='C1')
-axs[0].semilogx(scale, acc_SVM[2, :], label='SVM positive', linestyle='--', color='C2')
-axs[0].semilogx(scale, acc_PPSVM[0, :], label='PPSVM total', linestyle='-', color='C0')
-axs[0].semilogx(scale, acc_PPSVM[1, :], label='PPSVM negative', linestyle='-', color='C1')
-axs[0].semilogx(scale, acc_PPSVM[2, :], label='PPSVM positive', linestyle='-', color='C2')
-axs[0].legend()
-axs[0].set_xlabel('scale')
-axs[0].set_ylabel('accuracy')
-axs[1].semilogx(scale, time_PPSVM)
-axs[1].set_ylim([0, 6000])
-axs[1].set_xlabel('scale')
-axs[1].set_ylabel('time (s)')
-plt.tight_layout()
-fig.savefig('../output/result_wbc_s.pdf')
+    fig, axs = plt.subplots(1, 2, figsize=(7.2, 3.6), dpi=600)
+    axs[0].semilogx(scale, acc_SVM[1, :], label='SVM negative', linestyle='--', color='C1')
+    axs[0].semilogx(scale, acc_SVM[2, :], label='SVM positive', linestyle='--', color='C2')
+    axs[0].semilogx(scale, acc_SVM[0, :], label='SVM total', linestyle='--', color='C0')
+    axs[0].semilogx(scale, acc_PPSVM[1, :], label='PPSVM negative', linestyle='-', color='C1')
+    axs[0].semilogx(scale, acc_PPSVM[2, :], label='PPSVM positive', linestyle='-', color='C2')
+    axs[0].semilogx(scale, acc_PPSVM[0, :], label='PPSVM total', linestyle='-', color='C0')
+    axs[0].legend()
+    axs[0].set_xlabel('scale')
+    axs[0].set_ylabel('accuracy')
+    axs[1].semilogx(scale, time_PPSVM)
+    axs[1].set_ylim([0, np.max(time_PPSVM)*1.2])
+    axs[1].set_xlabel('scale')
+    axs[1].set_ylabel('time (s)')
+    plt.tight_layout()
+    fig.savefig(save_name + ".pdf")
 
-# %%
+plot_scale(s_list, result_wbc_s, "../output/result_wbc_s")
+
+# %% run on CKD dataset
+result_ckd_s = scan_scale("../assets/chronic_kidney_disease2.data", 
+                          3, 0.012, s_list, 
+                          "../output/result_ckd_s")
+plot_scale(s_list, result_ckd_s, "../output/result_ckd_s")
