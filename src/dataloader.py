@@ -49,14 +49,17 @@ class DataLoader(object):
         y[y > thr] = val2
         return y
         
-def get_svm_weights(trainData,testData=None,p=2,c=3,verbose=True):
+def get_svm_weights(trainData,testData=None,p=2,c=1,verbose=True):
     '''
     :param trainData: (X_train, Y_train)
     :param testData:  (X_test, Y_test)
     :param p: order of poly (in paper p=2 for wbc dataset)
     :return: support_vecs,intercept, dual_coef, model, perdiction_result(optional)
     '''
-    clf = svm.SVC(kernel="poly",degree=p,C=c)
+    # def poly_kernel(X1, X2):
+    #     return (X1 @ X2.T + 1) ** 2
+    # clf = svm.SVC(kernel=poly_kernel, C=c)
+    clf = svm.SVC(kernel="poly", degree=p, gamma=1.0, coef0=1.0, C=c)
     if verbose:
         scores = cross_val_score(clf, trainData[0], trainData[1], cv=5)
         print("val acc (leave one out among training data):",np.mean(scores))
@@ -69,6 +72,7 @@ def get_svm_weights(trainData,testData=None,p=2,c=3,verbose=True):
     prediction_result = None
     if testData !=None:
         prediction_result = clf.predict(testData[0])
+        decision_functions = clf.decision_function(testData[0])
         acc = prediction_result==testData[1]
         acc = sum(acc)/acc.shape[0]
         acc_per_cls = []
@@ -104,15 +108,15 @@ def test_loo(loo_list, p=2, c=3, verbose=False):
     return y_pred, n_sv, acc, acc_per_cls
 
 if __name__ == '__main__':
-    wbc_loader = DataLoader("../assets/breast_cancer_wisconsin.data", 1/683)
+    wbc_loader = DataLoader("../assets/breast_cancer_wisconsin.data", 0.3)
     X_wbc_train, X_wbc_test, y_wbc_train, y_wbc_test = wbc_loader.data
     ddr_loader = DataLoader("../assets/messidor_features.data", 0.3)
     X_ddr_train, X_ddr_test, y_ddr_train, y_ddr_test = ddr_loader.data
 
-    support_indice,intercept, dual_coef, model,_ =get_svm_weights((X_wbc_train,y_wbc_train),(X_wbc_test,y_wbc_test), p=2, c=3)
+    support_indice,intercept, dual_coef, model,_ =get_svm_weights((X_wbc_train,y_wbc_train),(X_wbc_test,y_wbc_test), p=2, c=1)
 
     support_indice_ddr, intercept_ddr, dual_coef_ddr, model_ddr, _ = get_svm_weights((X_ddr_train, y_ddr_train), (X_ddr_test,
                                                                                                 y_ddr_test),p=3,c=0.3)
     # Note: ddr dataset is probably not the best dataset for poly SVM, best test accuracy is around 65%
 
-    test_loo(wbc_loader.data_loo, p=2, c=10, verbose=False) 
+    test_loo(wbc_loader.data_loo, p=2, c=1, verbose=False) 
