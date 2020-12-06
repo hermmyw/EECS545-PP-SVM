@@ -114,6 +114,8 @@ if __name__ == '__main__':
     X_wbc_train, X_wbc_test, y_wbc_train, y_wbc_test = wbc_loader.data
     ckd_loader = DataLoader("../assets/chronic_kidney_disease2.data", 0.3)
     X_ckd_train, X_ckd_test, y_ckd_train, y_ckd_test = ckd_loader.data
+    bupa_loader = DataLoader("../assets/bupa.data", 0.3)
+    X_bupa_train, X_bupa_test, y_bupa_train, y_bupa_test = bupa_loader.data
 
     support_indice,intercept, dual_coef, model,_ = \
         get_svm_weights((X_wbc_train,y_wbc_train),(X_wbc_test,y_wbc_test), \
@@ -147,6 +149,22 @@ if __name__ == '__main__':
         for c in c_list:
             print(f"c={c}")
             _, _, acc_c, _ = test_loo(ckd_loader.data_loo, p=p, c=c, verbose=False)
+            acc_p.append(acc_c)
+        acc.append(acc_p)
+    acc = np.array(acc).T
+
+    plt.semilogx(c_list, acc)
+    plt.show()
+
+    acc = []
+    p_list = [2, 3, 4, 5]
+    c_list = np.logspace(-4, 1, 50)
+    for p in p_list:
+        print(f"p={p}")
+        acc_p = []
+        for c in c_list:
+            print(f"c={c}")
+            _, _, acc_c, _ = test_loo(bupa_loader.data_loo, p=p, c=c, verbose=False)
             acc_p.append(acc_c)
         acc.append(acc_p)
     acc = np.array(acc).T

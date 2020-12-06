@@ -126,3 +126,9 @@ result_ckd_s = scan_scale("../assets/chronic_kidney_disease2.data",
                           3, 0.012, s_list, 
                           "../output/result_ckd_s")
 plot_scale(s_list, result_ckd_s, "../output/result_ckd_s")
+
+# %% run on CKD dataset
+result_bupa_s = scan_scale("../assets/bupa.data", 
+                           2, 0.18, s_list, 
+                           "../output/result_bupa_s")
+plot_scale(s_list, result_bupa_s, "../output/result_bupa_s")
